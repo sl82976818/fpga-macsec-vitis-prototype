@@ -1,0 +1,66 @@
+# publication-sanitized copy; conclusions unchanged
+function,positive,negative,edge,continuous_frames,backpressure,reset,result
+HLS core AES-GCM math (300 vec vs OpenSSL),YES,YES(0..255 partial),YES,YES,NA,NA,TESTED
+HLS RTL cosim (Verilog),YES,YES(300 vec),YES,NA,NA,NA,TESTED
+AES key: all-zero/all-one/random,NO,NO,NO,NA,NA,NO,NOT_TESTED
+96-bit IV construction,IMPLICIT-only,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+IV/PN nonce change per frame,YES(loopback),NO,NO,NA,NA,NO,PARTIALLY_TESTED
+AAD length 0/1..15/16/17..31,NO,NO,NO,NA,NA,NO,NOT_TESTED
+MACsec actual AAD (48bit),IMPLICIT-only,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+payload len 0/1..15/16/17/32/multi-block/max,15-255 in C-sim; others NO,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+partial final block (tkeep),YES(C-sim)/IMPLICIT(integration),NO,NO,NA,NA,NO,PARTIALLY_TESTED
+tag correct,YES(loopback),NO,NO,NA,NA,NO,PARTIALLY_TESTED
+tag single-bit error -> drop,NO,NO,NO,NA,NA,NO,NOT_TESTED
+ciphertext single-bit error -> decrypt fail,NO,NO,NO,NA,NA,NO,NOT_TESTED
+AAD error,NO,NO,NO,NA,NA,NO,NOT_TESTED
+IV error,NO,NO,NO,NA,NA,NO,NOT_TESTED
+key error,NO,NO,NO,NA,NA,NO,NOT_TESTED
+encrypt/decrypt inverse,YES(loopback),NO,NO,NA,NA,NO,TESTED(self-consistent only)
+decrypt fail handling,YES(release),NO,NO,NA,NA,NO,AUTH-GAP
+frame 42/46/60/64,ARP-mix/small,YES(length<24 drop),NO,NA,NA,NO,PARTIALLY_TESTED
+frame 65/127/128/129,partial,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+frame 1518,YES(large_pkts),NO,NO,YES(count),NO,NO,TESTED(count-only)
+frame 1522 VLAN,NO,NO,NO,NA,NA,NO,NOT_TESTED
+runt/oversize,NO,YES(<24B),NO,NA,NA,NO,PARTIALLY_TESTED(runt)
+tag across 64-bit beat/128-bit block,IMPLICIT-only,NO,NO,NA,NA,NO,NOT_TESTED
+payload last 1..15 bytes,IMPLICIT-only,NO,NO,NA,NA,NO,NOT_TESTED
+SecTAG/payload boundary cross beat,IMPLICIT-only,NO,NO,NA,NA,NO,NOT_TESTED
+VLAN present/absent,NO,NO,NO,NA,NA,NO,NOT_TESTED
+bcast/mcast/ucast,YES,NO,NO,NA,NA,NO,TESTED
+EtherType change,YES,NO,NO,NA,NA,NO,TESTED
+SCI present/absent,NO,NO,NO,NA,NA,NO,NOT_TESTED
+AN values,NO,NO,NO,NA,NA,NO,NOT_TESTED
+plain/protected/error frames,protected only,NO,NO,NA,NA,NO,GAP
+two frames back-to-back,YES(steady),NO,NO,NA,NA,NO,TESTED(count)
+10 frames continuous,YES,NO,NO,NA,NA,NO,TESTED(count)
+1000 frames continuous,YES(294+),NO,NO,NA,NA,NO,TESTED(count)
+regression determinism (same DUT/TB repeat),INTERMITTENT(FAIL 04-28x5 vs PASS 04-28x4),NO,NO,NA,NA,NO,NOT_TESTED (NON-DETERMINISTIC; lastfailed=true)
+long/short interleave,YES(arp-mix),NO,NO,NA,NA,NO,TESTED(count)
+64/1518 interleave,partial,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+different PN continuous,YES,NO,NO,NA,NA,NO,PARTIALLY_TESTED
+different key/SA continuous,NO,NO,NO,NA,NA,NO,NOT_TESTED
+good/bad tag interleave,NO,NO,NO,NA,NA,NO,NOT_TESTED
+RX drop then legal frame,NO,NO,NO,NA,NA,NO,NOT_TESTED
+TX/RX concurrent,partial,YES(pause/lfc),NO,NA,NA,NO,PARTIALLY_TESTED
+output backpressure,NO,NO,NO,NA,NA,NO,NOT_TESTED
+random tvalid,tb-fixed,NO,NO,NA,NA,NO,NOT_TESTED
+random tready,tb-fixed,NO,NO,NA,NA,NO,NOT_TESTED
+frame end + next start adjacent,IMPLICIT,NO,NO,NA,NA,NO,NOT_TESTED
+tag done + next frame same cycle,IMPLICIT,NO,NO,NA,NA,NO,NOT_TESTED
+FIFO near full/empty,NO,NO,NO,NA,NA,NO,NOT_TESTED
+long stall then resume,NO,NO,NO,NA,NA,NO,NOT_TESTED
+context binding per transaction,NO,NO,NO,NA,NA,NO,NOT_IMPLEMENTED
+cold/warm/crypto-only/wrapper-only reset,NO,NO,NO,NA,NA,NO,NOT_TESTED
+reset during AAD/payload/tail/tag/release,NO,NO,NO,NA,NA,NO,NOT_TESTED
+reset then first frame,NO,NO,NO,NA,NA,NO,NOT_TESTED
+reset then multiple frames,NO,NO,NO,NA,NA,NO,NOT_TESTED
+reset PN rollback check,NO,NO,NO,NA,NA,YES(rst->PN_INIT),GAP
+reset key/H/Y validity,NO,NO,NO,NA,NA,NO,NOT_TESTED
+reset stale plaintext/tag leak,NO,NO,NO,NA,NA,NO,NOT_TESTED
+CDC (async FIFO) test,NO,NO,NO,NA,NA,NO,NOT_TESTED
+post-synth/routed/SDF sim,NO,NO,NO,NA,NA,NO,NOT_TESTED
+replay duplicate PN,NO,NO,NO,NA,NA,NO,NOT_IMPLEMENTED
+replay old/out-of-order,NO,NO,NO,NA,NA,NO,NOT_IMPLEMENTED
+PN wrap near,NO,NO,NO,NA,NA,NO,NOT_TESTED
+auth-before-release zero-beat monitor,NO,NO,NO,NA,NA,NO,NOT_IMPLEMENTED
+independent oracle (Python/OpenSSL) integration,NO,NO,NO,NA,NA,NO,NOT_TESTED

@@ -1,0 +1,123 @@
+{
+  "project_identity": {
+    "root": "<project-root>",
+    "git_commit": "not-a-git-repo (dir name implies 2.75Gbps; zip name implies tested@2.7gbps)",
+    "production_top": "fpga (fpga_k35 -> fpga_core)",
+    "tx_top": "macsec_tx_wrapper",
+    "rx_top": "macsec_rx_wrapper",
+    "hls_encrypt_ip": "ip/aes128gcm_enc (HLS IP rtl test_aesGcmEncrypt_128u_s)",
+    "hls_decrypt_ip": "ip/aes128gcm_dec (HLS IP rtl test_aesGcmDecrypt_128u_s)",
+    "hls_source_version": "Vitis Security Lib 2022.1 gcm.hpp/gmac.hpp/aes.hpp; C main.cpp 300-vector test",
+    "hls_sim_rtl_hash_match": "IDENTICAL to production ip RTL (only test_enc_/test_dec_ name-prefix differs; verified by prefix-stripped diff)",
+    "hw_aes_key": "0x00112233445566778899AABBCCDDEEFF (shared TX+RX)",
+    "part": "xcku040-ffva1156-2-e",
+    "toolchain": "Vivado / Vivado HLS 2022.1",
+    "actual_clk": "hls_clk=sfx0_tx_clk_int 156.25MHz; pcie 250MHz",
+    "routed_timing": "NOT_MET (WNS -0.206ns, earlier routed report also NOT MET)",
+    "identity_classification": "EVIDENCE_INCOMPLETE at exact 2.7G identity; sim RTL faithful but param-diverged"
+  },
+  "simulation": {
+    "classification": "VITIS_MACSEC_SIMULATION_COVERAGE_MINIMAL",
+    "production_configuration_tested": false,
+    "production_configuration_note": "TB uses IF_COUNT=2,EQN_WIDTH=6,TQ_INDEX=13; fpga_k35 default IF_COUNT=1,EQN_WIDTH=5,TQ_INDEX=11",
+    "independent_oracle": false,
+    "independent_oracle_note": "Integration-level oracle absent; only loopback self-consistency (TX encrypt -> RX decrypt, same key same core). HLS C-sim has independent OpenSSL golden (300 vec) but that is core-internal only.",
+    "independent_experiments_executed": {
+      "E1_auth_before_release": "CONFIRMED_BEHAVIORAL (iverilog: production macsec_tag_strip FSM CAPTURE->OUTPUT->DRAIN->WAITTAG with corrupt 0xDEAD tag emitted, never ST_DROP; static: only drop path is length<MIN_FRAME_BYTES at line 257, zero tag-comparison branches)",
+      "E2_reset_pn_rollback": "CONFIRMED_BEHAVIORAL (iverilog: tx_pn 1->6 during frame1, hls_rst -> tx_pn=1 (PN_INIT), frame2 restarts at tx_pn=1 same key => same (key,PN) nonce reused)",
+      "S3_to_S8": "NOT_RUN (would pollute evidence given non-deterministic integration regression; require separate temp TBs)"
+    },
+    "existing_regression_pass": null,
+    "existing_regression_note": "sim_build/test_fpga_core/*_results.xml corpus (04-24..04-30) shows intermittent results: 44 PASS / 23 FAIL overall; full-length (wall>=1000s) FAIL on 04-24x1,04-28x5,04-29x1 versus PASS on 04-28x4,04-30x3. Same DUT/TB yields both PASS and FAIL on the same day (04-28). .pytest_cache/lastfailed=true (consistent). Regression is NOT deterministically passing -> not trustworthy.",
+    "false_pass_risk": [
+      "check_stage strictly compares tx_in==tx_out, rx_in==rx_out +/- pause (frame counts only), NEVER payload/tag/auth content",
+      "loopback (sfp_sink->sfp_source) makes TX/RX same-key self-consistent -> masks tag/cipher errors",
+      "no independent MACsec frame injection, no negative auth tests",
+      "only single key/SSCI/fixed IV/fixed AAD tested",
+      "rx_in==rx_out tolerates dropping all-and-failing (if RX never drops, counts equal even with no crypto work)",
+      "INTERMITTENT: same DUT/TB produced both PASS and FAIL full-length runs (04-28: 5 FAIL + 4 PASS); lastfailed=true persists -> cannot claim deterministic pass"
+    ],
+    "functional_matrix": {
+      "hls_core_csim_vs_openssl_300vect": "TESTED",
+      "hls_rtl_cosim": "TESTED (Verilog PASS)",
+      "aes_key_variations": "NOT_TESTED",
+      "iv_pn_nonce_per_frame": "PARTIALLY_TESTED (loopback implicit)",
+      "aad_length_variations": "NOT_TESTED (fixed 48bit in integration; 5 in C-sim)",
+      "payload_length_0_to_max": "PARTIALLY_TESTED (C-sim 0..255; integration various)",
+      "partial_final_block": "PARTIALLY_TESTED",
+      "tag_singlebit_error": "NOT_TESTED + NOT_IMPLEMENTED (no auth gate)",
+      "cipher_aad_iv_key_error": "NOT_TESTED",
+      "encrypt_decrypt_inverse": "TESTED (loopback self only)",
+      "macsec_frame_42_to_1518": "PARTIALLY_TESTED (wire EtherType/overhead & recovery; frame count)",
+      "vlan_1522": "NOT_TESTED",
+      "secTag_beat_boundary": "NOT_TESTED",
+      "continuous_frames_1000": "PARTIALLY_TESTED (294+ frames count-only)",
+      "context_binding": "NOT_TESTED / NOT_IMPLEMENTED (no generation)",
+      "replay": "NOT_TESTED / NOT_IMPLEMENTED"
+    },
+    "continuous_frames": null,
+    "continuous_frames_note": "Long runs at frame-count level pass; no per-frame identity binding, no multi-SA.",
+    "random_backpressure": false,
+    "random_backpressure_note": "No random tvalid/tready or tag-channel stall tests; loopback uses moment-level handshake only.",
+    "reset_matrix": null,
+    "reset_matrix_note": "Startup reset only; no warm/crypto/wrapper/MAC/HS reset; no reset mid-frame; reset-PN rollback is a GAP (fixed to PN_INIT).",
+    "negative_auth_tests": null,
+    "negative_auth_note": "No negative tag/cipher/AAD/IV/key tests; RX does not authenticate, so would not drop anyway.",
+    "post_synthesis_tests": null,
+    "post_synthesis_note": "No post-synth/routed/SDF simulation exists. routed timing not met (WNS<0). -> POST_ROUTE_SECURITY_BEHAVIOR_UNPROVEN",
+    "coverage_gaps": [
+      "independent oracle at integration level",
+      "negative auth matrix",
+      "replay protection (no impl)",
+      "reset matrix + reset-PN safety",
+      "backpressure / random tvalid-tready / FIFO boundary",
+      "SA lifecycle, key switch atomicity, generation, zeroization",
+      "multi-SA / dual direction key separation",
+      "PN wrap & drop/retry semantics",
+      "auth-before-release zero-beat proof",
+      "production-parameter config",
+      "post-synthesis verification"
+    ]
+  },
+  "security": {
+    "classification": "VITIS_MACSEC_SECURITY_BLOCKER_FOUND",
+    "nonce_uniqueness": "NONCE_REUSE_STRUCTURAL_RISK (same key TX+RX sharing key id; reset rolls PN back to PN_INIT; no unique SSCI per node; no wrap fail-close; no PN persistence)",
+    "sa_lifecycle": "NOT_IMPLEMENTED",
+    "frame_context_binding": "NOT_IMPLEMENTED (no generation; completion",
+    "authentication_before_release": "BLOCKER (macsec_rx_wrapper releases plaintext in OUT_DEC regardless of tag; top icv_check_enable=1'b0, received_icv=0; get computed ICV never compared)",
+    "replay_protection": "NOT_IMPLEMENTED",
+    "fail_closed_behavior": "GAP (only length<24B drop; auth fails not dropped; bypass if enable=0)",
+    "key_handling": "GAP (plaintext key in FF, no zeroization, single constant key, no generation)",
+    "reset_security": "BLOCKER (reset rolls PN to start with same key -> nonce reuse potential; no H/Y/table invalidation test)",
+    "observability": "GAP (counters only, no {SA,AN,PN,generation} event fingerprint)",
+    "standard_compliance": "NOT_IMPLEMENTED (custom IV {SSCI,PN,0x5C5C5C5C}, custom AAD, no replay window, not full 802.1AE)",
+    "blockers": [
+      "B1 nonce uniqueness: shared key TX/RX + reset-PN rollback + non-unique SSCI",
+      "B2 AUTHENTICATION_BEFORE_RELEASE_VIOLATION: RX releases plaintext without tag verification",
+      "B3 replay protection missing (required for real MACsec)",
+      "B4 integrated oracle not independent + production parameter not tested"
+    ],
+    "gaps": [
+      "SA key lifecycle & atomic switch (cached-SA risk: H/Y vs key mismatch, old frame uses new H)",
+      "PN wrap & fail-closed & drop/retry",
+      "reset security matrix & PN/key/H invalidation",
+      "tag/completion context binding (no generation)",
+      "backpressure reset overlap",
+      "zero / zeroization"
+    ]
+  },
+  "architecture_refactor_authorized": false,
+  "architecture_refactor_note": "SECURITY_OR_VERIFICATION_HARD_GATE: nonce blocker, auth-before-release blocker, replay not implemented, oracle not independent, production config untested.",
+  "minimum_prerequisites": [
+    "independent oracle (Python / PyCryptodome/OpenSSL / NIST) on external MACsec frames, comparison of ciphertext+tag+auth decision, at integration level",
+    "RX auth-before-release hard gate: icv_check_enable=1; refuse plaintext=0 beats on tag mismatch; drop-record explicit",
+    "replay protection: lowAcceptable PN / window / dup / old / out-of-order / wrap",
+    "nonce uniqueness: TX & RX use separate direction keys OR unique SSCI assignment; PN not rolled back by reset (please recheck) ; wrap fail-closed",
+    "SA lifecycle: SA table, active/retired, generation, key atomic switch, zeroization of key/H samples",
+    "event fingerprint {direction, frame_seq, SA, AN, PN, generation} for drop/error counting",
+    "production-parameter simulation equivalence",
+    "fix routed timing WNS<=0, then post-synth / routed security sim",
+    "add negative auth / backpressure / reset / post-synth regression suites"
+  ],
+  "publication_note": "Publication-sanitized copy. Technical conclusions unchanged. Host-specific absolute paths normalized to <project-root> / <toolchain-root> / <experiment-dir>."
+}

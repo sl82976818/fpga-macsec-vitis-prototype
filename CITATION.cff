@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "FPGA AES-GCM / Experimental MACsec Research Prototype"
+abstract: >-
+  Research prototype of an FPGA AES-128-GCM / experimental MACsec datapath on
+  a Corundum-based PCIe NIC, using the AMD/Xilinx Vitis Security Library
+  AES-GCM core. Includes a public performance post-mortem (historical ~2.7/2.75
+  Gbps baseline, 10G-capable crypto core model, store-and-forward wrapper
+  bottleneck) and a security audit showing the revision is not
+  production-secure.
+authors:
+  - family-names: Sun
+    given-names: Le
+version: "0.2-audited"
+date-released: "2026-08-09"
+keywords:
+  - fpga
+  - verilog
+  - vitis-hls
+  - aes-gcm
+  - macsec
+  - corundum
+  - network-security
+license: BSD-2-Clause
+repository-code: TODO: fill in the public repository URL before publication

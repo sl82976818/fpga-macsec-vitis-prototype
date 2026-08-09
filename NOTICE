@@ -1,0 +1,10 @@
+NOTICE
+
+This project contains or is derived from components of:
+
+- Corundum FPGA NIC (copyright (c) 2019-2023 The Regents of the University of
+  California; BSD-2-Clause-Views)
+- AMD/Xilinx Vitis Libraries (Copyright 2019 Xilinx, Inc.; Apache License 2.0,
+  with a BSD component for ext/xcl2 code)
+
+See THIRD_PARTY_NOTICES.md and the SPDX headers in individual source files.

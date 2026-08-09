@@ -1,0 +1,55 @@
+--- a/fpga/mqnic/Nexus_K3P_S/fpga_25g/rtl/fpga_k35.v
++++ b/fpga/mqnic/Nexus_K3P_S/fpga_25g/rtl/fpga_k35.v
+@@ -33,6 +33,7 @@ module fpga #
+     parameter PORTS_PER_IF = 1,
+     parameter SCHED_PER_IF = PORTS_PER_IF,
+     parameter PORT_MASK = 0,
++    parameter SFP_COUNT_125US = 125000/6.4,
+ 
+     // Clock configuration
+     parameter CLK_PERIOD_NS_NUM = 4,
+@@ -110,7 +111,7 @@ module fpga #
+     parameter DMA_LEN_WIDTH = 16,
+     parameter DMA_TAG_WIDTH = 16,
+     parameter RAM_ADDR_WIDTH = $clog2(TX_RAM_SIZE > RX_RAM_SIZE ? TX_RAM_SIZE : RX_RAM_SIZE),
+-    parameter RAM_PIPELINE = 2,                 //2
++    parameter RAM_PIPELINE = 3,                 //2
+ 
+     // PCIe interface configuration
+     parameter AXIS_PCIE_DATA_WIDTH = 256,
+@@ -154,10 +155,10 @@ module fpga #
+     /*
+      * PCI express
+      */
+-    input  wire [3:0]   pcie_rx_p,
+-    input  wire [3:0]   pcie_rx_n,
+-    output wire [3:0]   pcie_tx_p,
+-    output wire [3:0]   pcie_tx_n,
++    input  wire [7:0]   pcie_rx_p,
++    input  wire [7:0]   pcie_rx_n,
++    output wire [7:0]   pcie_tx_p,
++    output wire [7:0]   pcie_tx_n,
+     input  wire         pcie_mgt_refclk_p,
+     input  wire         pcie_mgt_refclk_n,
+     input  wire         pcie_reset_n,
+@@ -978,7 +979,8 @@ module fpga #
+     eth_xcvr_phy_10g_gty_quad_wrapper #(
+     .COUNT(1),
+     .GT_GTH(1),
+-    .PRBS31_ENABLE(1)
++    .PRBS31_ENABLE(1),
++    .COUNT_125US(SFP_COUNT_125US)
+     )
+     sfp_phy_quad_inst (
+         .xcvr_ctrl_clk(clk_125mhz_int),
+@@ -1266,6 +1268,10 @@ module fpga #
+          */
+         .clk_250mhz(pcie_user_clk),
+         .rst_250mhz(pcie_user_reset),
++        // Run MACsec HLS crypto at 10G MAC TX clock domain (156.25 MHz)
++        // to raise per-frame crypto throughput vs previous 125 MHz domain.
++        .hls_clk(sfp0_tx_clk_int),
++        .hls_rst(sfp0_tx_rst_int),
+ 
+         /*
+          * PTP clock

@@ -1,0 +1,27 @@
+# License
+
+This repository is a **multi-license source tree**.
+
+Unless otherwise noted, original files authored for this project by Le Sun are
+licensed under the **BSD 2-Clause License** (see `LICENSES/BSD-2-Clause.txt`).
+
+Third-party and derivative files retain their respective upstream licenses.
+See the SPDX headers inside individual source files, `LICENSES/`,
+`docs/PROVENANCE.md`, and `THIRD_PARTY_NOTICES.md` for details.
+
+In particular:
+
+* **Corundum FPGA NIC** components (upstream and Le Sun-modified derivatives):
+  BSD 2-Clause License with "views" attribution clause
+  (`SPDX-License-Identifier: BSD-2-Clause-Views`, see
+  `LICENSES/upstream/Corundum-LICENSE.txt`).
+* **AMD/Xilinx Vitis Libraries** example sources and headers used by the HLS
+  build: Apache License 2.0 (see `LICENSES/Apache-2.0.txt` and
+  `LICENSES/upstream/Vitis_Libraries-LICENSE.txt`).
+* **AMD/Xilinx generated IP and build outputs**: not redistributed (see
+  `release_metadata/FILES_EXCLUDED.md` and `docs/BUILD.md`).
+
+This license statement applies only to code for which the ownership and
+redistribution rights are confirmed. Files whose ownership/license could not
+be confirmed are **not included** in this release (see
+`docs/PUBLISH_REVIEW_REQUIRED.md`).
