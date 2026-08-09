@@ -45,7 +45,7 @@ module macsec_tx_wrapper #
     input  wire                               enable
 );
 
-    // Preserve only Ethernet L2 header (DA/SA/EtherType) in clear text.
+
     localparam integer HEADER_BYTES = 14;
     localparam integer HEADER_BEAT0_BYTES = (HEADER_BYTES >= MAC_DATA_BYTES) ? MAC_DATA_BYTES : HEADER_BYTES;
     localparam integer HEADER_BEAT1_BYTES = (HEADER_BYTES > MAC_DATA_BYTES) ? (HEADER_BYTES - MAC_DATA_BYTES) : 0;
@@ -147,8 +147,8 @@ module macsec_tx_wrapper #
     reg [HEADER_FIFO_PTR_WIDTH-1:0] ethertype_fifo_wr_ptr_reg = {HEADER_FIFO_PTR_WIDTH{1'b0}};
     reg [HEADER_FIFO_PTR_WIDTH-1:0] ethertype_fifo_rd_ptr_reg = {HEADER_FIFO_PTR_WIDTH{1'b0}};
     reg [HEADER_FIFO_PTR_WIDTH:0]   ethertype_fifo_count_reg = {HEADER_FIFO_PTR_WIDTH+1{1'b0}};
-    // Break long combinational coupling between input-side push logic and
-    // output-side ready/handshake logic by using one-cycle delayed pop strobes.
+
+
     reg                             header_pop_d1_reg = 1'b0;
     reg                             ethertype_pop_d1_reg = 1'b0;
 
@@ -304,7 +304,7 @@ module macsec_tx_wrapper #
             end_hold_valid_reg <= 1'b0;
             end_hold_reg <= 1'b0;
         end else begin
-            // Cipher payload slot
+
             if (ip_ciphertext_write && bridge_out_cipher_read && cipher_hold_valid_reg) begin
                 cipher_hold_reg <= ip_ciphertext_din;
                 cipher_hold_valid_reg <= 1'b1;
@@ -315,7 +315,7 @@ module macsec_tx_wrapper #
                 cipher_hold_valid_reg <= 1'b0;
             end
 
-            // Tag slot
+
             if (ip_tag_write && bridge_out_tag_read && tag_hold_valid_reg) begin
                 tag_hold_reg <= ip_tag_din;
                 tag_hold_valid_reg <= 1'b1;
@@ -326,7 +326,7 @@ module macsec_tx_wrapper #
                 tag_hold_valid_reg <= 1'b0;
             end
 
-            // Two-deep length queue to avoid frame-length loss under short-frame bursts.
+
             if (ip_length_write && (len_hold_count_reg != 2'd2) && !(bridge_out_len_read && (len_hold_count_reg != 2'd0))) begin
                 if (len_hold_count_reg == 2'd0) begin
                     len_hold_reg <= ip_length_din;
@@ -348,7 +348,7 @@ module macsec_tx_wrapper #
                 end
             end
 
-            // End slot
+
             if (ip_end_write && bridge_out_end_read && end_hold_valid_reg) begin
                 end_hold_reg <= ip_end_din;
                 end_hold_valid_reg <= 1'b1;
@@ -536,16 +536,14 @@ module macsec_tx_wrapper #
         end
     end
 
-    // Keep split path transparent so zero-keep EOF beats are not dropped by
-    // intermediate register logic.
+
     assign split_pre_tdata = split_payload_data_reg;
     assign split_pre_tkeep = split_payload_keep_reg;
     assign split_pre_tvalid = split_pre_in_valid;
     assign split_pre_tlast = s_axis_tlast;
     assign split_pre_tready = split_fifo_tready;
 
-    // Break the long TX input -> compactor control path with a small
-    // registered AXIS FIFO stage in MAC clock domain.
+
     axis_fifo #(
         .DEPTH(64),
         .DATA_WIDTH(`MACSEC_MAC_DATA_WIDTH),
@@ -893,8 +891,7 @@ module macsec_tx_wrapper #
         (out_state_reg == OUT_HEADER) ? keep_mask_from_count(HEADER_BEAT1_BYTES) :
                                         enc_frame_tkeep;
 
-    // Do not start emitting a frame until both header and per-frame tuser
-    // metadata are present; otherwise TX completion tag can be lost.
+
     assign out_tvalid_int =
         (out_state_reg == OUT_IDLE)   ? (!header_fifo_empty && !tuser_fifo_empty && enc_frame_tvalid) :
         (out_state_reg == OUT_HEADER) ? 1'b1 :
@@ -1129,7 +1126,7 @@ module axis_keep_compactor_tx #(
     endfunction
 
     wire out_full = (count_reg >= KEEP_WIDTH);
-    // Only flush when buffered payload bytes are present.
+
     wire out_partial = last_pending_reg && (count_reg != 0);
     wire out_valid_int = out_full || out_partial;
 
@@ -1147,8 +1144,8 @@ module axis_keep_compactor_tx #(
 
     generate
         if (USER_WIDTH > 1) begin : gen_user_wide
-            // Preserve frame metadata on SOF for MAC TX timestamp/tag extraction.
-            // Keep bad-frame indication from EOF beat on bit 0.
+
+
             assign m_axis_tuser = out_valid_int ?
                 {first_user_reg[USER_WIDTH-1:1], (m_axis_tlast ? last_user_reg[0] : first_user_reg[0])} :
                 {USER_WIDTH{1'b0}};

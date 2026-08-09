@@ -25,73 +25,61 @@ module axis_to_ap_fifo_bridge #
     parameter integer SAME_CLK = 0
 )
 (
-    // ===========================================================
-    // MAC Clock Domain (156.25 MHz)
-    // ===========================================================
+
+
     input  wire                           mac_clk,
     input  wire                           mac_rst,
 
-    // AXI-Stream Input (from mqnic_core or eth_mac)
+
     input  wire [`MACSEC_MAC_DATA_WIDTH-1:0]  s_axis_tdata,
     input  wire [MAC_DATA_BYTES-1:0]            s_axis_tkeep,
     input  wire                                s_axis_tvalid,
     output wire                                s_axis_tready,
     input  wire                                s_axis_tlast,
 
-    // ===========================================================
-    // HLS Clock Domain (200 MHz)
-    // ===========================================================
+
     input  wire                           hls_clk,
     input  wire                           hls_rst,
 
-    // ===========================================================
-    // AP_FIFO Output (to HLS AES-GCM IP)
-    // ===========================================================
-    // Plaintext stream (128-bit blocks)
+
     output wire [`MACSEC_HLS_DATA_WIDTH-1:0]   m_plaintext_dout,
     output wire                                m_plaintext_empty_n,
     input  wire                                m_plaintext_read,
 
-    // Length stream (bits)
+
     output wire [63:0]                         m_length_dout,
     output wire                                m_length_empty_n,
     input  wire                                m_length_read,
 
-    // End of frame marker
+
     output wire                                m_end_dout,
     output wire                                m_end_empty_n,
     input  wire                                m_end_read,
 
-    // ===========================================================
-    // Control Signals
-    // ===========================================================
+
     output wire                                frame_start,
     output wire                                frame_end
 );
 
-    // ===========================================================
-    // State Machine States
-    // ===========================================================
+
     localparam [2:0]
         ST_IDLE        = 3'd0,
-        ST_FIRST_BEAT  = 3'd1,  // Receiving first 64-bit beat of a 128-bit block
-        ST_HOLD        = 3'd2,   // Holding first beat, waiting for second beat (tready=1)
-        ST_FRAME_END   = 3'd3;   // Frame has ended, flush remaining data
+        ST_FIRST_BEAT  = 3'd1,
+        ST_HOLD        = 3'd2,
+        ST_FRAME_END   = 3'd3;
     localparam DEBUG_LOG = 1'b0;
 
-    // ===========================================================
-    // Internal Signals
-    // ===========================================================
-    reg [2:0] state, state_next;
-    reg [1:0] beat_count;         // Count of 64-bit beats within a 128-bit block
 
-    // Current 128-bit block being assembled
+    reg [2:0] state, state_next;
+    reg [1:0] beat_count;
+
+
     reg [`MACSEC_HLS_DATA_WIDTH-1:0] block_data;
     reg block_valid;
-    reg first_beat_pending;        // Flag that first beat was received but not yet aggregated
-    reg flush_in_progress;          // High for one cycle when entering ST_FRAME_END to allow FIFO write
+    reg first_beat_pending;
+    reg flush_in_progress;
 
-    // Frame byte counter (for length calculation)
+
     reg [31:0] frame_byte_count;
     reg frame_start_reg;
     reg frame_end_reg;
@@ -106,7 +94,7 @@ module axis_to_ap_fifo_bridge #
     reg meta_deq_reg = 1'b0;
     reg meta_enq_pending_reg = 1'b0;
     reg [63:0] meta_enq_len_reg = 64'd0;
-    // Debug counters for frame metadata flow
+
     (* keep = "true" *) reg [31:0] dbg_frame_end_pulse_cnt_reg = 32'd0;
     (* keep = "true" *) reg [31:0] dbg_meta_enq_cnt_reg = 32'd0;
     (* keep = "true" *) reg [31:0] dbg_meta_deq_cnt_reg = 32'd0;
@@ -118,15 +106,13 @@ module axis_to_ap_fifo_bridge #
     reg [META_QUEUE_PTR_W-1:0] meta_next_wr_ptr_reg;
     reg [META_QUEUE_PTR_W-1:0] meta_next_rd_ptr_reg;
 
-    // Length output (will be padded to 16-byte alignment)
+
     wire [63:0] output_length_bits;
-    reg length_fifo_wr_en_reg;  // Declare early for debug block usage
-    // Length FIFO storage (used in debug and length FIFO sections)
+    reg length_fifo_wr_en_reg;
+
     reg [63:0] length_store;
 
-    // ===========================================================
-    // CDC FIFO Signals (MAC domain → HLS domain)
-    // ===========================================================
+
     wire [`MACSEC_HLS_DATA_WIDTH-1:0] fifo_din;
     wire fifo_wr_en;
     wire fifo_full;
@@ -148,14 +134,11 @@ module axis_to_ap_fifo_bridge #
     wire end_fifo_empty;
     wire end_fifo_rd_en;
 
-    // ===========================================================
-    // Reset Synchronization for CDC FIFOs
-    // ===========================================================
-    // Proper CDC: synchronize reset to each clock domain before FIFO
+
     reg mac_rst_sync_hls;
     reg hls_rst_sync_mac;
 
-    // Synchronize mac_rst into hls_clk domain
+
     always @(posedge hls_clk or posedge mac_rst) begin
         if (mac_rst) begin
             mac_rst_sync_hls <= 1'b1;
@@ -164,7 +147,7 @@ module axis_to_ap_fifo_bridge #
         end
     end
 
-    // Synchronize hls_rst into mac_clk domain
+
     always @(posedge mac_clk or posedge hls_rst) begin
         if (hls_rst) begin
             hls_rst_sync_mac <= 1'b1;
@@ -173,11 +156,11 @@ module axis_to_ap_fifo_bridge #
         end
     end
 
-    // Combined reset for each FIFO side (from respective domain)
+
     wire wr_rst;
     wire rd_rst;
-    assign wr_rst = mac_rst;                        // Write side uses MAC reset
-    assign rd_rst = mac_rst_sync_hls || hls_rst;    // Read side uses synchronized reset
+    assign wr_rst = mac_rst;
+    assign rd_rst = mac_rst_sync_hls || hls_rst;
 
     function [7:0] keep_byte_count;
         input [MAC_DATA_BYTES-1:0] keep;
@@ -194,17 +177,11 @@ module axis_to_ap_fifo_bridge #
         $display("[%t] %m PARAM MAC_DATA_BYTES=%0d", $time, MAC_DATA_BYTES);
     end
 
-    // ===========================================================
-    // tready generation
-    // ===========================================================
-    // Can accept new data when:
-    // - In IDLE (no pending block)
-    // - In ST_FIRST_BEAT (waiting for second beat, can accept more frames)
-    // - FIFO has space
+
     assign s_axis_tready = (state == ST_IDLE || state == ST_FIRST_BEAT || state == ST_HOLD) &&
         !fifo_full && !block_valid && (meta_count_reg < META_QUEUE_DEPTH);
 
-    // Debug: FSM state
+
     reg [2:0] dbg_state_prev;
     always @(posedge mac_clk) begin
         dbg_state_prev <= state;
@@ -223,9 +200,7 @@ module axis_to_ap_fifo_bridge #
         end
     end
 
-    // ===========================================================
-    // State Machine (MAC clock domain)
-    // ===========================================================
+
     always @(posedge mac_clk) begin
         if (mac_rst) begin
             state <= ST_IDLE;
@@ -248,7 +223,7 @@ module axis_to_ap_fifo_bridge #
             frame_start_reg <= 1'b0;
             frame_end_reg <= 1'b0;
             frame_meta_valid_reg <= 1'b0;
-            // Hold block_valid until plaintext FIFO accepts the block.
+
             if (block_valid && !fifo_full) begin
                 block_valid <= 1'b0;
             end
@@ -256,17 +231,17 @@ module axis_to_ap_fifo_bridge #
             case (state)
                 ST_IDLE: begin
                     if (s_axis_tvalid && s_axis_tready) begin
-                        // Start of new frame
+
                         frame_byte_count <= keep_byte_count(s_axis_tkeep);
                         if (DEBUG_LOG) begin
                             $display("[%t] %m BRIDGE IN: keep=%h bytes=%0d last=%b data=%h",
                                 $time, s_axis_tkeep, keep_byte_count(s_axis_tkeep), s_axis_tlast, s_axis_tdata);
                         end
                         if (keep_byte_count(s_axis_tkeep) != 0) begin
-                            beat_count <= 2'b1;  // first 64-bit beat captured
-                            // Pack first AXIS beat into lower 64 bits.
+                            beat_count <= 2'b1;
+
                             block_data[63:0] <= s_axis_tdata;
-                            block_valid <= 1'b0;  // Block not yet complete
+                            block_valid <= 1'b0;
                             first_beat_pending <= 1'b1;
                         end else begin
                             beat_count <= 2'b0;
@@ -276,10 +251,10 @@ module axis_to_ap_fifo_bridge #
                         frame_start_reg <= 1'b1;
 
                         if (s_axis_tlast) begin
-                            // Single-beat frame (rare but possible)
+
                             state <= ST_FRAME_END;
                         end else begin
-                            state <= ST_HOLD;  // tready=1, wait for second beat
+                            state <= ST_HOLD;
                         end
                     end
                 end
@@ -299,17 +274,17 @@ module axis_to_ap_fifo_bridge #
                         if (s_axis_tlast) begin
                             state <= ST_FRAME_END;
                         end else begin
-                            state <= ST_HOLD;  // tready=1, wait for second beat
+                            state <= ST_HOLD;
                         end
                     end
                 end
 
                 ST_HOLD: begin
-                    // In HOLD, tready=1, waiting for second beat
+
                     if (s_axis_tvalid && s_axis_tready) begin
-                        // Pack second AXIS beat into upper 64 bits.
+
                         block_data[127:64] <= s_axis_tdata;
-                        block_valid <= 1'b1;  // Block is now complete
+                        block_valid <= 1'b1;
                         first_beat_pending <= 1'b0;
                         beat_count <= 2'b0;
                         frame_byte_count <= frame_byte_count + keep_byte_count(s_axis_tkeep);
@@ -317,17 +292,15 @@ module axis_to_ap_fifo_bridge #
                         if (s_axis_tlast) begin
                             state <= ST_FRAME_END;
                         end else begin
-                            state <= ST_FIRST_BEAT;  // Get next first beat
+                            state <= ST_FIRST_BEAT;
                         end
                     end
                     flush_in_progress <= 1'b0;
                 end
 
                 ST_FRAME_END: begin
-                    // Flush frame tail first, then emit frame_end metadata.
-                    // Emit length/end token as soon as frame boundary is known to
-                    // avoid a deadlock where plaintext FIFO backpressure prevents
-                    // block flush while HLS is waiting for length metadata.
+
+
                     if (!flush_in_progress) begin
                         flush_in_progress <= 1'b1;
                         frame_end_reg <= 1'b1;
@@ -355,15 +328,12 @@ module axis_to_ap_fifo_bridge #
         end
     end
 
-    // ===========================================================
-    // Length Calculation
-    // ===========================================================
-    // HLS length ports expect actual payload length in bits.
+
     assign output_length_bits = {32'h0, frame_byte_count} << 3;
     wire axis_hs = s_axis_tvalid && s_axis_tready;
     wire frame_last_hs = axis_hs && s_axis_tlast;
 
-    // Debug: Monitor length FIFO write
+
     reg dbg_length_wr_en;
     initial dbg_length_wr_en = 0;
     always @(posedge mac_clk) begin
@@ -376,11 +346,7 @@ module axis_to_ap_fifo_bridge #
         end
     end
 
-    // ===========================================================
-    // CDC FIFOs (MAC domain → HLS domain)
-    // ===========================================================
 
-    // ---- Block Data FIFO ----
     assign fifo_din = block_data;
     assign fifo_wr_en = block_valid && !fifo_full;
     always @(posedge mac_clk) begin
@@ -475,10 +441,6 @@ module axis_to_ap_fifo_bridge #
     assign m_plaintext_empty_n = !fifo_empty;
     assign fifo_rd_en = m_plaintext_read && !fifo_empty;
 
-    // ---- Length FIFO ----
-    // Note: Length is sent once per frame, not per block
-    // We need to store the length when frame ends
-    // length_store, length_fifo_wr_en_reg declared earlier
 
     always @(posedge mac_clk) begin
         if (mac_rst) begin
@@ -491,23 +453,21 @@ module axis_to_ap_fifo_bridge #
             meta_enq_pending_reg <= 1'b0;
             meta_enq_len_reg <= 64'd0;
         end else begin
-            // Defaults
+
             length_fifo_wr_en_reg <= 1'b0;
             meta_deq_reg <= 1'b0;
 
-            // Capture frame metadata pulse from the state machine and hold it
-            // until it is queued into meta_len_mem.
+
             if (frame_meta_valid_reg) begin
                 meta_enq_pending_reg <= 1'b1;
                 meta_enq_len_reg <= frame_meta_length_bits_reg;
             end
 
-            // Metadata queue update with explicit next-state math to avoid
-            // dropping tokens on simultaneous enqueue+dequeue.
+
             begin
                 meta_can_enq_reg = meta_enq_pending_reg && (meta_count_reg < META_QUEUE_DEPTH);
-                // Length and end tokens must stay strictly paired per frame.
-                // Do not dequeue metadata unless both output FIFOs can accept it.
+
+
                 meta_can_deq_reg = (meta_count_reg != 0) && !length_fifo_full && !end_fifo_full;
 
                 meta_next_count_reg = meta_count_reg;
@@ -522,10 +482,10 @@ module axis_to_ap_fifo_bridge #
                     dbg_meta_enq_cnt_reg <= dbg_meta_enq_cnt_reg + 32'd1;
                 end
 
-                // Length drives crypto progress; do not let end-stream backpressure stall length.
+
                 if (meta_can_deq_reg) begin
-                    // Latch for debug visibility only; data path uses memory read
-                    // at the current rd_ptr when write strobe is asserted.
+
+
                     length_store <= meta_len_mem[meta_rd_ptr_reg];
                     length_fifo_wr_en_reg <= 1'b1;
                     meta_deq_reg <= 1'b1;
@@ -632,15 +592,15 @@ module axis_to_ap_fifo_bridge #
     );
     end endgenerate
 
-    // Length value from FIFO - pass directly to HLS IP
+
     assign m_length_dout = length_fifo_dout;
     assign m_length_empty_n = !length_fifo_empty;
     assign length_fifo_rd_en = m_length_read && !length_fifo_empty;
 
-    // ---- End Marker FIFO ----
+
     assign end_fifo_din = 1'b1;
-    // Keep end token write strictly paired with length token write.
-    // Backpressure is already handled in meta_can_deq_reg.
+
+
     assign end_fifo_wr_en = meta_deq_reg;
 
     generate if (SAME_CLK) begin : g_end_fifo_sync
@@ -729,9 +689,7 @@ module axis_to_ap_fifo_bridge #
     assign m_end_empty_n = !end_fifo_empty;
     assign end_fifo_rd_en = m_end_read && !end_fifo_empty;
 
-    // ===========================================================
-    // Control Output
-    // ===========================================================
+
     assign frame_start = frame_start_reg;
     assign frame_end = frame_end_reg;
 

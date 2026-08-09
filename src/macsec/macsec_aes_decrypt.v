@@ -77,7 +77,7 @@ module macsec_aes_decrypt #
     reg        tag_pop_reg = 1'b0;
     reg        end_pop_reg = 1'b0;
     reg [127:0] received_tag_reg = 128'd0;
-    // Perf observability counters (hierarchical debug only)
+
     (* keep = "true" *) reg [31:0] perf_run_cycles_last_reg = 32'd0;
     (* keep = "true" *) reg [31:0] perf_run_cycles_acc_reg = 32'd0;
     (* keep = "true" *) reg [31:0] perf_frames_done_reg = 32'd0;
@@ -128,8 +128,8 @@ module macsec_aes_decrypt #
             run_cycles_reg <= 32'd0;
             blocks_read_reg <= 32'd0;
         end else begin
-            // ap_ctrl_hs requires ap_start pulse per transaction.
-            // Keep continuity by pulsing at done boundary restart.
+
+
             ap_start_reg <= 1'b0;
             length_pop_reg <= 1'b0;
             tag_pop_reg <= 1'b0;
@@ -161,7 +161,7 @@ module macsec_aes_decrypt #
                     end
                 end
                 ST_PRIME: begin
-                    // Give FWFT FIFO outputs one cycle to settle before first read.
+
                     state_reg <= ST_RUN;
                 end
                 ST_RUN: begin

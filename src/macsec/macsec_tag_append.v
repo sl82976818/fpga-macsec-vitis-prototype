@@ -302,8 +302,8 @@ module macsec_tag_append #
 
                 ST_OUTPUT_PAYLOAD: begin
                     if (!m_axis_tvalid || out_hs) begin
-                        // If the previously transmitted beat was the final payload beat,
-                        // switch to auth-tail or complete frame before loading new data.
+
+
                         if (out_hs && out_fifo_last_reg) begin
                             if (AUTH_BYTES == 0 || out_auth_fill_reg >= AUTH_BYTES) begin
                                 frame_byte_count_reg <= 16'd0;
@@ -311,7 +311,7 @@ module macsec_tag_append #
                                 m_axis_tvalid <= 1'b0;
                                 m_axis_tlast  <= 1'b0;
                             end else begin
-                                // Keep stream continuous across payload->auth boundary.
+
                                 auth_word_tmp = {DATA_WIDTH{1'b0}};
                                 auth_left_tmp = AUTH_BYTES - out_auth_fill_reg;
                                 if (auth_left_tmp < KEEP_WIDTH) begin
@@ -361,8 +361,7 @@ module macsec_tag_append #
                                     auth_fill_count_tmp = AUTH_BYTES;
                                 end
 
-                                // Overwrite byte lanes directly to avoid OR-merging with
-                                // undefined bits in invalid payload lanes.
+
                                 for (j = 0; j < KEEP_WIDTH; j = j + 1) begin
                                     if (j < auth_fill_count_tmp) begin
                                         out_data_tmp[(payload_count_tmp + j[15:0])*8 +: 8] =
@@ -399,8 +398,7 @@ module macsec_tag_append #
                             end
                         end
 
-                        // Only load next auth beat if still in auth state after the
-                        // transition handling above.
+
                         if (state_reg == ST_OUTPUT_AUTH && (!out_hs || (AUTH_BYTES - auth_index_reg > KEEP_WIDTH))) begin
                             auth_word_tmp = {DATA_WIDTH{1'b0}};
 

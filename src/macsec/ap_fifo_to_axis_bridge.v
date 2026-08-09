@@ -23,15 +23,12 @@ module ap_fifo_to_axis_bridge #
     parameter integer SAME_CLK = 0
 )
 (
-    // ===========================================================
-    // HLS Clock Domain (200 MHz)
-    // ===========================================================
+
+
     input  wire                            hls_clk,
     input  wire                            hls_rst,
 
-    // ===========================================================
-    // AP_FIFO Input (from HLS AES-GCM IP)
-    // ===========================================================
+
     input  wire [`MACSEC_HLS_DATA_WIDTH-1:0] s_ciphertext_dout,
     input  wire                            s_ciphertext_empty_n,
     output wire                            s_ciphertext_read,
@@ -40,7 +37,7 @@ module ap_fifo_to_axis_bridge #
     input  wire                            s_tag_empty_n,
     output wire                            s_tag_read,
 
-    // Length is in bits
+
     input  wire [63:0]                     s_length_dout,
     input  wire                            s_length_empty_n,
     output wire                            s_length_read,
@@ -49,9 +46,7 @@ module ap_fifo_to_axis_bridge #
     input  wire                            s_end_empty_n,
     output wire                            s_end_read,
 
-    // ===========================================================
-    // MAC Clock Domain (156.25 MHz)
-    // ===========================================================
+
     input  wire                            mac_clk,
     input  wire                            mac_rst,
 
@@ -145,14 +140,12 @@ module ap_fifo_to_axis_bridge #
         end
     endfunction
 
-    // ===========================================================
-    // HLS-side read control
-    // ===========================================================
+
     assign s_ciphertext_read = s_ciphertext_empty_n && !ciphertext_fifo_full;
     assign s_tag_read = s_tag_empty_n && !tag_fifo_full;
     assign s_length_read = s_length_empty_n && !length_fifo_full;
-    // We reconstruct frame boundaries from length + ciphertext count.
-    // Still drain HLS end stream so it never backpressures the crypto core.
+
+
     assign s_end_read = s_end_empty_n;
 
     assign ciphertext_fifo_wr_en = s_ciphertext_read;
@@ -160,9 +153,7 @@ module ap_fifo_to_axis_bridge #
     assign length_fifo_wr_en = s_length_read;
     assign end_fifo_wr_en = 1'b0;
 
-    // ===========================================================
-    // CDC FIFOs (HLS -> MAC)
-    // ===========================================================
+
     generate if (SAME_CLK) begin : g_ciphertext_fifo_sync
     xpm_fifo_sync #(
         .FIFO_MEMORY_TYPE("auto"),
@@ -491,9 +482,7 @@ module ap_fifo_to_axis_bridge #
     );
     end endgenerate
 
-    // ===========================================================
-    // MAC-side data path
-    // ===========================================================
+
     always @(posedge mac_clk) begin
         if (mac_rst) begin
             state_reg <= ST_IDLE;
@@ -560,7 +549,7 @@ module ap_fifo_to_axis_bridge #
                     if (!m_axis_tvalid_reg) begin
                         remaining_bytes_reg <= frame_length_bytes_reg - frame_byte_count_reg;
                         beat_bytes_reg <= beat_byte_count(frame_length_bytes_reg - frame_byte_count_reg);
-                        // Emit lower 64 bits first.
+
                         m_axis_tdata_reg <= block_data_reg[63:0];
                         m_axis_tkeep_reg <= keep_mask(beat_byte_count(frame_length_bytes_reg - frame_byte_count_reg));
                         m_axis_tlast_reg <= (frame_length_bytes_reg - frame_byte_count_reg <= 32'd8);

@@ -49,7 +49,7 @@ module macsec_rx_wrapper #
     input  wire                               icv_check_enable
 );
 
-    // Preserve only Ethernet L2 header (DA/SA/EtherType) in clear text.
+
     localparam integer HEADER_BYTES = 14;
     localparam integer HEADER_BEAT0_BYTES = (HEADER_BYTES >= MAC_DATA_BYTES) ? MAC_DATA_BYTES : HEADER_BYTES;
     localparam integer HEADER_BEAT1_BYTES = (HEADER_BYTES > MAC_DATA_BYTES) ? (HEADER_BYTES - MAC_DATA_BYTES) : 0;
@@ -230,7 +230,7 @@ module macsec_rx_wrapper #
             if (HEADER_BYTES < 16) begin
                 is_pause_ctrl_header = 1'b0;
             end else begin
-            // DA=01:80:C2:00:00:01, EtherType=0x8808, opcode=0x0001
+
             is_pause_ctrl_header =
                 (hdr[0*8 +: 8]  == 8'h01) &&
                 (hdr[1*8 +: 8]  == 8'h80) &&
@@ -255,9 +255,8 @@ module macsec_rx_wrapper #
     assign crypto_enable = enable && PROTECT_ENABLE;
 
     assign split_payload_present = |split_payload_keep_reg;
-    // Do not accept a new frame while previous frame header is still pending
-    // enqueue; otherwise back-to-back frame ends can overwrite pending header
-    // metadata and desynchronize header/ethertype pairing.
+
+
     assign s_axis_ready_int = payload_fifo_tready && !header_push_pending_reg;
     assign strip_push_beat = in_axis_hs && split_payload_present && !drop_pause_frame_now;
     assign strip_payload_tready = strip_compact_tready;
@@ -622,8 +621,8 @@ module macsec_rx_wrapper #
     end
 
     macsec_tag_strip #(
-        // Input to tag_strip excludes Ethernet header, so accept any payload length
-        // that still carries mandatory MACsec authentication data.
+
+
         .MIN_FRAME_BYTES(24)
     )
     u_tag_strip (

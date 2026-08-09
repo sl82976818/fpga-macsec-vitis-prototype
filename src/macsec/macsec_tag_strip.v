@@ -287,7 +287,7 @@ module macsec_tag_strip #
 
                 ST_OUTPUT: begin
                     if (!m_axis_tvalid || out_hs) begin
-                        // Handle completion of previously transmitted beat first.
+
                         if (out_hs) begin
                             if (payload_remaining_reg <= out_fifo_word_bytes_reg) begin
                                 payload_remaining_reg <= 16'd0;
@@ -303,7 +303,7 @@ module macsec_tag_strip #
                             end
                         end
 
-                        // Load next payload beat immediately to avoid AXIS underflow.
+
                         if (state_reg == ST_OUTPUT && (!out_hs || (payload_remaining_reg > out_fifo_word_bytes_reg)) && !fifo_empty) begin
                             fifo_word_byte_count_tmp = keep_count(fifo_dout_keep);
 

@@ -70,7 +70,7 @@ module macsec_aes_encrypt #
     reg        ap_start_reg = 1'b0;
     reg        length_pop_reg = 1'b0;
     reg        end_pop_reg = 1'b0;
-    // Perf observability counters (hierarchical debug only)
+
     (* keep = "true" *) reg [31:0] perf_run_cycles_last_reg = 32'd0;
     (* keep = "true" *) reg [31:0] perf_run_cycles_acc_reg = 32'd0;
     (* keep = "true" *) reg [31:0] perf_frames_done_reg = 32'd0;
@@ -130,8 +130,8 @@ module macsec_aes_encrypt #
             dbg_plain_read_cnt_reg <= 32'd0;
             dbg_ap_done_cnt_reg <= 32'd0;
         end else begin
-            // ap_ctrl_hs requires ap_start as a pulse per transaction.
-            // Keep frame-level continuity by pulsing again at done boundary.
+
+
             ap_start_reg <= 1'b0;
             length_pop_reg <= 1'b0;
             end_pop_reg <= 1'b0;
@@ -177,8 +177,8 @@ module macsec_aes_encrypt #
                         perf_blocks_read_last_reg <= blocks_read_reg;
                         perf_blocks_read_acc_reg <= perf_blocks_read_acc_reg + blocks_read_reg;
                         perf_frames_done_reg <= perf_frames_done_reg + 32'd1;
-                        // Continuous streaming restart: consume next frame
-                        // metadata at done boundary when available.
+
+
                         if (can_restart && (ip_ap_idle || ip_ap_ready)) begin
                             ap_start_reg <= 1'b1;
                             dbg_ap_start_cnt_reg <= dbg_ap_start_cnt_reg + 32'd1;
