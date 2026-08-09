@@ -1,0 +1,44 @@
+--- a/fpga/mqnic/Nexus_K3P_S/fpga_25g/fpga_k35.xdc
++++ b/fpga/mqnic/Nexus_K3P_S/fpga_25g/fpga_k35.xdc
+@@ -134,9 +134,35 @@ set_property IOSTANDARD LVCMOS18 [get_po
+ #set_false_path -from [get_clocks -of_objects [get_pins sfp_phy_quad_inst/phy1.eth_xcvr_phy_1/xcvr_gth_com_usp.eth_xcvr_gth_full_inst/inst/gen_gtwizard_gthe3_top.eth_xcvr_gth_full_gtwizard_gthe3_inst/gen_gtwizard_gthe3.gen_rx_user_clocking_internal.gen_single_instance.gtwiz_userclk_rx_inst/gen_gtwiz_userclk_rx_main.bufg_gt_usrclk2_inst/O]] -to [get_clocks -of_objects [get_pins sfp_phy_quad_inst/phy1.eth_xcvr_phy_1/phy_inst/eth_phy_10g_rx_inst/clkrxphy/inst/mmcme3_adv_inst/CLKOUT0]]
+ #set_false_path -from [get_clocks -of_objects [get_pins sfp_phy_quad_inst/phy1.eth_xcvr_phy_1/xcvr_gth_com_usp.eth_xcvr_gth_full_inst/inst/gen_gtwizard_gthe3_top.eth_xcvr_gth_full_gtwizard_gthe3_inst/gen_gtwizard_gthe3.gen_tx_user_clocking_internal.gen_single_instance.gtwiz_userclk_tx_inst/gen_gtwiz_userclk_tx_main.bufg_gt_usrclk2_inst/O]] -to [get_clocks -of_objects [get_pins sfp_phy_quad_inst/phy1.eth_xcvr_phy_1/phy_inst/eth_phy_10g_tx_inst/clktxphy/inst/mmcme3_adv_inst/CLKOUT0]]
+ 
+-create_pblock pblock_1
+-add_cells_to_pblock [get_pblocks pblock_1] [get_cells -quiet [list {core_inst/core_inst/core_pcie_inst/core_inst/iface[0].interface_inst} {core_inst/core_inst/core_pcie_inst/core_inst/iface[1].interface_inst}]]
+-resize_pblock [get_pblocks pblock_1] -add {SLICE_X24Y0:SLICE_X100Y174}
+-resize_pblock [get_pblocks pblock_1] -add {DSP48E2_X3Y0:DSP48E2_X15Y69}
+-resize_pblock [get_pblocks pblock_1] -add {RAMB18_X3Y0:RAMB18_X9Y69}
+-resize_pblock [get_pblocks pblock_1] -add {RAMB36_X3Y0:RAMB36_X9Y34}
++# Disable legacy interface pblock; it is currently constraining several
++# pcie_user_clk critical paths (event_fifo -> cqm BRAM) and reducing placer freedom.
++delete_pblocks [get_pblocks -quiet pblock_1]
++
++# SFP TX/RX recovered clocks are asynchronous to PCIe user clock.
++# CDC is handled in logic/FIFOs; these paths must not be timed as synchronous.
++set_clock_groups -asynchronous -group [get_clocks -quiet pcie_user_clk] -group [get_clocks -quiet {sfp0_rx_clk_int sfp0_tx_clk_int}]
++
++# SFP recovered RX/TX clocks are independent recovered domains; do not time
++# direct crossings as synchronous paths.
++set_clock_groups -asynchronous \
++    -group [get_clocks -quiet sfp0_rx_clk_int] \
++    -group [get_clocks -quiet sfp0_tx_clk_int]
++
++# --------------------------------------------------------------------------
++# Timing closure assists for current critical regions
++# --------------------------------------------------------------------------
++
++# --------------------------------------------------------------------------
++# R4 timing partition cleanup
++# --------------------------------------------------------------------------
++# 1) clk_out2_clk_wiz_0 (125/156 domain) is asynchronous to recovered SFP
++#    TX/RX clocks. Without this, FIFO reset/control crossings are timed as
++#    synchronous setup paths and create artificial violations.
++set_clock_groups -asynchronous \
++    -group [get_clocks -quiet clk_out2_clk_wiz_0] \
++    -group [get_clocks -quiet {sfp0_rx_clk_int sfp0_tx_clk_int}]
++
++# 2) Disable legacy MACsec pblock constraints that were causing overlap/
++#    over-utilization and long detours in timing-critical paths.
++delete_pblocks [get_pblocks -quiet pblock_macsec_gmac]
++delete_pblocks [get_pblocks -quiet pblock_macsec_rx]

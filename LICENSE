@@ -1,24 +1,27 @@
-BSD 2-Clause License
+# License
 
-Copyright (c) 2026, sl82976818
+This repository is a **multi-license source tree**.
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Unless otherwise noted, original files authored for this project by Le Sun are
+licensed under the **BSD 2-Clause License** (see `LICENSES/BSD-2-Clause.txt`).
 
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+Third-party and derivative files retain their respective upstream licenses.
+See the SPDX headers inside individual source files, `LICENSES/`,
+`docs/PROVENANCE.md`, and `THIRD_PARTY_NOTICES.md` for details.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+In particular:
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* **Corundum FPGA NIC** components (upstream and Le Sun-modified derivatives):
+  BSD 2-Clause License with "views" attribution clause
+  (`SPDX-License-Identifier: BSD-2-Clause-Views`, see
+  `LICENSES/upstream/Corundum-LICENSE.txt`).
+* **AMD/Xilinx Vitis Libraries** example sources and headers used by the HLS
+  build: Apache License 2.0 (see `LICENSES/Apache-2.0.txt` and
+  `LICENSES/upstream/Vitis_Libraries-LICENSE.txt`).
+* **AMD/Xilinx generated IP and build outputs**: not redistributed (see
+  `release_metadata/FILES_EXCLUDED.md` and `docs/BUILD.md`).
+
+This license statement applies only to code for which the ownership and
+redistribution rights are confirmed. Files whose ownership/license could not
+be confirmed are **not included** in this release (see
+`docs/PUBLISH_REVIEW_REQUIRED.md`).

@@ -1,0 +1,198 @@
+{
+  "meta": {
+    "model": "store-and-forward single-frame-in-flight @156.25MHz, 64-bit MAC + 128-bit HLS",
+    "decision": "CRYPTO_CAPABLE_INTEGRATION_BOTTLENECK",
+    "generated": "2026-08-06T20:50:45.416407",
+    "findings": [
+      "Original per-frame crypto serial tax = 186 cyc (~1190ns) dominates small frames",
+      "Cached-SA per-frame tax = 24 cyc (H / updateKey / GF128_prepare precomputed at SA config)",
+      "GCM core alone (no wrapper): cached 1518B -> ~3.3 Gbps payload, 10G capable",
+      "Store-and-forward SINGLE frame-in-flight caps everything: original 1518=2.60 Gbps, cached 1518=3.34 Gbps",
+      "2.7G label matches model original-1518B exactly (2.60 Gbps) -> measurement is architecture-consistent, NOT invalid",
+      "cached-SA alone cannot reach 10G: wrapper must add 2+ frame pipelining (dual FIFO / frame-slot) to hide capture+release+fixed crypto"
+    ],
+    "crypto_cycles": {
+      "orig": 186,
+      "cached": 24
+    }
+  },
+  "rows": [
+    {
+      "frame_bytes": 64,
+      "cached_sa": false,
+      "cap_cyc": 8,
+      "crypto_cyc": 190,
+      "rel_cyc": 11,
+      "total_cyc": 277,
+      "line_gbps": 0.31,
+      "payload_gbps": 0.23,
+      "pps": 564079.42
+    },
+    {
+      "frame_bytes": 64,
+      "cached_sa": true,
+      "cap_cyc": 8,
+      "crypto_cyc": 28,
+      "rel_cyc": 11,
+      "total_cyc": 115,
+      "line_gbps": 0.74,
+      "payload_gbps": 0.54,
+      "pps": 1358695.65
+    },
+    {
+      "frame_bytes": 128,
+      "cached_sa": false,
+      "cap_cyc": 16,
+      "crypto_cyc": 194,
+      "rel_cyc": 19,
+      "total_cyc": 297,
+      "line_gbps": 0.56,
+      "payload_gbps": 0.48,
+      "pps": 526094.28
+    },
+    {
+      "frame_bytes": 128,
+      "cached_sa": true,
+      "cap_cyc": 16,
+      "crypto_cyc": 32,
+      "rel_cyc": 19,
+      "total_cyc": 135,
+      "line_gbps": 1.22,
+      "payload_gbps": 1.06,
+      "pps": 1157407.41
+    },
+    {
+      "frame_bytes": 256,
+      "cached_sa": false,
+      "cap_cyc": 32,
+      "crypto_cyc": 202,
+      "rel_cyc": 35,
+      "total_cyc": 337,
+      "line_gbps": 0.96,
+      "payload_gbps": 0.9,
+      "pps": 463649.85
+    },
+    {
+      "frame_bytes": 256,
+      "cached_sa": true,
+      "cap_cyc": 32,
+      "crypto_cyc": 40,
+      "rel_cyc": 35,
+      "total_cyc": 175,
+      "line_gbps": 1.86,
+      "payload_gbps": 1.73,
+      "pps": 892857.14
+    },
+    {
+      "frame_bytes": 512,
+      "cached_sa": false,
+      "cap_cyc": 64,
+      "crypto_cyc": 218,
+      "rel_cyc": 67,
+      "total_cyc": 417,
+      "line_gbps": 1.55,
+      "payload_gbps": 1.49,
+      "pps": 374700.24
+    },
+    {
+      "frame_bytes": 512,
+      "cached_sa": true,
+      "cap_cyc": 64,
+      "crypto_cyc": 56,
+      "rel_cyc": 67,
+      "total_cyc": 255,
+      "line_gbps": 2.53,
+      "payload_gbps": 2.44,
+      "pps": 612745.1
+    },
+    {
+      "frame_bytes": 1024,
+      "cached_sa": false,
+      "cap_cyc": 128,
+      "crypto_cyc": 250,
+      "rel_cyc": 131,
+      "total_cyc": 577,
+      "line_gbps": 2.23,
+      "payload_gbps": 2.19,
+      "pps": 270797.23
+    },
+    {
+      "frame_bytes": 1024,
+      "cached_sa": true,
+      "cap_cyc": 128,
+      "crypto_cyc": 88,
+      "rel_cyc": 131,
+      "total_cyc": 415,
+      "line_gbps": 3.1,
+      "payload_gbps": 3.04,
+      "pps": 376506.02
+    },
+    {
+      "frame_bytes": 1518,
+      "cached_sa": false,
+      "cap_cyc": 190,
+      "crypto_cyc": 280,
+      "rel_cyc": 193,
+      "total_cyc": 731,
+      "line_gbps": 2.6,
+      "payload_gbps": 2.57,
+      "pps": 213748.29
+    },
+    {
+      "frame_bytes": 1518,
+      "cached_sa": true,
+      "cap_cyc": 190,
+      "crypto_cyc": 118,
+      "rel_cyc": 193,
+      "total_cyc": 569,
+      "line_gbps": 3.34,
+      "payload_gbps": 3.3,
+      "pps": 274604.57
+    },
+    {
+      "frame_bytes": 4000,
+      "cached_sa": false,
+      "cap_cyc": 500,
+      "crypto_cyc": 436,
+      "rel_cyc": 503,
+      "total_cyc": 1507,
+      "line_gbps": 3.32,
+      "payload_gbps": 3.31,
+      "pps": 103682.81
+    },
+    {
+      "frame_bytes": 4000,
+      "cached_sa": true,
+      "cap_cyc": 500,
+      "crypto_cyc": 274,
+      "rel_cyc": 503,
+      "total_cyc": 1345,
+      "line_gbps": 3.72,
+      "payload_gbps": 3.7,
+      "pps": 116171.0
+    },
+    {
+      "frame_bytes": 9000,
+      "cached_sa": false,
+      "cap_cyc": 1125,
+      "crypto_cyc": 748,
+      "rel_cyc": 1128,
+      "total_cyc": 3069,
+      "line_gbps": 3.67,
+      "payload_gbps": 3.66,
+      "pps": 50912.35
+    },
+    {
+      "frame_bytes": 9000,
+      "cached_sa": true,
+      "cap_cyc": 1125,
+      "crypto_cyc": 586,
+      "rel_cyc": 1128,
+      "total_cyc": 2907,
+      "line_gbps": 3.87,
+      "payload_gbps": 3.86,
+      "pps": 53749.57
+    }
+  ],
+  "publication_note": "Publication-sanitized copy. Technical conclusions unchanged. Host-specific absolute paths normalized to <project-root> / <toolchain-root> / <experiment-dir>."
+}
