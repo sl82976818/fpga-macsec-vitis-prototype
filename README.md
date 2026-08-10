@@ -3,8 +3,11 @@
 **Corundum + AMD Vitis Security Library**
 
 A research prototype of an inline AES-128-GCM protected Ethernet datapath on a
-Corundum-based FPGA NIC, integrating the AMD/Xilinx Vitis Security Library
-AES-GCM core. This repository is an **audited release candidate** of an
+Corundum-based FPGA NIC, developed on the **AMD/Xilinx KCU105 (Kintex UltraScale
+KU040)** and integrating the AMD/Xilinx Vitis Security Library AES-GCM core.
+The archived Corundum design baseline used by this project did not provide a
+native KCU105 target; the board-level NIC design was ported/adapted to KCU105
+as part of this work. This repository is an **audited release candidate** of an
 archived engineering project — including the full story of how it became
 functional, hit a performance wall, was later decomposed cycle-by-cycle, and
 was found to have security architecture gaps.
@@ -13,6 +16,7 @@ was found to have security architecture gaps.
 
 | Item | Status |
 | --- | --- |
+| Target board | AMD/Xilinx KCU105 (KU040), project-specific Corundum port |
 | Functional datapath | YES |
 | AES-GCM mathematical core | VERIFIED (300-vector C-sim vs OpenSSL, RTL cosim) |
 | Historical ~2.7G project baseline | YES (archived project label) |
@@ -44,7 +48,10 @@ experimental frame format**, not full IEEE 802.1AE.
 
 - **Le Sun** wrote the project-specific MACsec integration: `src/macsec/`
   wrappers, tag append/strip, HLS integration, verification infrastructure,
-  and the audits. These files carry a `Copyright (c) 2026 Le Sun` header.
+  and the audits. He also ported the archived Corundum-based NIC design to the
+  AMD/Xilinx KCU105, including the board-level integration and constraints
+  needed to bring up the NIC on that platform. These project-specific files
+  carry a `Copyright (c) 2026 Le Sun` header where applicable.
 - **Corundum** (Berkeley Regents / Alex Forencich, BSD-2-Clause-Views) provides
   the NIC framework under `src/fpga/`; a few files were modified by Le Sun
   (explicitly marked) and the exact diffs are in `patches/corundum/`.
